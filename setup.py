@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
     long_desc = fh.read()
 
 setup(
-    name="valclient", # Replace with your own username
+    name="valorantclient", # Replace with your own username
     version="2.28",
     author="colinh",
     description="Wrapper for VALORANT's client API",
@@ -23,4 +23,5 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     python_requires=">=3.0",
+
 )
