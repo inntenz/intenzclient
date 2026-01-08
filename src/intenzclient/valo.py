@@ -4,7 +4,7 @@ import requests
 import os
 import base64
 import urllib3
-import json
+import json, time
 
 # imports for modules used in the package
 from .resources import regions
@@ -25,14 +25,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class Client:
     def __init__(self, region: t.Text="na", auth: t.Optional[t.Mapping]=None):
-        """
-        NOTE: when using manual auth, local endpoints will not be available
-        auth format:
-        {
-            "username":"usernamehere",
-            "password":"passwordhere"
-        }
-        """
         if auth is None:
             self.lockfile_path = os.path.join(
                 os.getenv("LOCALAPPDATA"), R"Riot Games\Riot Client\Config\lockfile"
@@ -1019,28 +1011,7 @@ class Client:
         """
         data = self.fetch(endpoint="/chat/v4/friendrequests", endpoint_type="local")
         return data
-    
-    def in_pregame(self):
-        try:
-            pregame = self.pregame_fetch_player()
-            if pregame and pregame.get("MatchID"):
-                return pregame.get("MatchID")
-        except PhaseError:
-            return False
-        except Exception as e:
-            return False
-        return False
-    
-    def check_ingame(self):
-        try:
-            coregame = self.coregame_fetch_player()
-            if coregame and coregame.get("MatchID"):
-                return coregame.get("MatchID")
-        except PhaseError:
-            return False
-        except Exception as e:
-            return False
-        return False
+
 
     # local utility functions
     def __get_live_season(self) -> str:
@@ -1128,3 +1099,171 @@ class Client:
                 return dict(zip(keys, data))
         except:
             raise LockfileError("Lockfile not found")
+        
+
+    def in_agent_select(self):
+        """Checks if user is currently is in the agent select and returns MatchID"""
+        try:
+            data = self.fetch(
+                endpoint=f"/pregame/v1/players/{self.puuid}",
+                endpoint_type="glz",
+                exceptions={404: [PhaseError, "You are not in a pre-game"]},
+            )
+            if data and data.get("MatchID"):
+                return data.get("MatchID")
+        except PhaseError:
+            return False
+        except Exception as e:
+            return False
+        return False
+    
+    def is_ingame(self):
+        """Checks if User is currently in a game and returns MatchID"""
+        try:
+            data = self.fetch(
+                endpoint=f"/core-game/v1/players/{self.puuid}",
+                endpoint_type="glz",
+                exceptions={404: [PhaseError, "You are not in a core-game"]},
+            )
+            if data and data.get("MatchID"):
+                return data.get("MatchID")
+        except PhaseError:
+            return False
+        except Exception as e:
+            return False
+        return False
+    
+    def is_lobby(self):
+        """Checks if User is currently in the lobby"""
+        if (not self.in_agent_select()) and (not self.is_ingame()):
+            return True
+        return False
+    
+    def party_id(self):
+        """Get the user's current party ID"""
+        data = self.fetch(
+            endpoint=f"/parties/v1/players/{self.puuid}", endpoint_type="glz"
+        )
+        return data["CurrentPartyID"]
+    
+    
+    def select_agent(self, agent_id):
+        """Selects agent"""
+        match_id = self.in_agent_select()
+        if match_id:
+            data = self.post(
+                endpoint=f"/pregame/v1/matches/{match_id}/select/{agent_id}",
+                endpoint_type="glz",
+                exceptions={404: [PhaseError, "You are not in a pre-game"]},
+            )
+            return data
+        else:
+            return False
+
+    def lock_agent(self, agent_id):
+        """Locks agent"""
+        match_id = self.in_agent_select()
+        if match_id:
+            data = self.post(
+                endpoint=f"/pregame/v1/matches/{match_id}/lock/{agent_id}",
+                endpoint_type="glz",
+                exceptions={404: [PhaseError, "You are not in a pre-game"]},
+            )
+            return data
+        else:
+            return False
+        
+    def instalock_agent(self, agent_id):
+        """Selects and locks agent instantly"""
+        if self.in_agent_select():
+            time.sleep(4)
+            self.select_agent(agent_id)
+            time.sleep(2)
+            self.lock_agent(agent_id)
+            return True
+        else:
+            return False
+
+    def change_queue(self, queue_id: t.Text) -> t.Mapping[str, t.Any]:
+        """Changes matchmaking queue"""
+        party_id = self.__get_current_party_id()
+        data = self.post(
+            endpoint=f"/parties/v1/parties/{party_id}/queue",
+            endpoint_type="glz",
+            json_data={"queueID": queue_id},
+        )
+        return data
+
+    def start_custom_game(self) -> t.Mapping[str, t.Any]:
+        """Starts custom game"""
+        party_id = self.__get_current_party_id()
+        data = self.post(
+            endpoint=f"/parties/v1/parties/{party_id}/startcustomgame",
+            endpoint_type="glz",
+        )
+        return data
+
+    def enter_matchmaking(self) -> t.Mapping[str, t.Any]:
+        """Enters matchmaking"""
+        party_id = self.__get_current_party_id()
+        data = self.post(
+            endpoint=f"/parties/v1/parties/{party_id}/matchmaking/join",
+            endpoint_type="glz",
+        )
+        return data
+
+    def leave_matchmaking(self) -> t.Mapping[str, t.Any]:
+        """Leaves matchmaking"""
+        party_id = self.__get_current_party_id()
+        data = self.post(
+            endpoint=f"/parties/v1/parties/{party_id}/matchmaking/leave",
+            endpoint_type="glz",
+        )
+        return data
+    
+    def owned_items(
+        self, item_type: t.Text = "e7c63390-eda7-46e0-bb7a-a6abdacd2433"
+    ) -> t.Mapping[str, t.Any]:
+        """
+        List what the player owns (agents, skins, buddies, ect.)
+        Correlate with the UUIDs in client.fetch_content() to know what items are owned
+
+        NOTE: uuid to item type
+        "e7c63390-eda7-46e0-bb7a-a6abdacd2433": "skin_level",
+        "3ad1b2b2-acdb-4524-852f-954a76ddae0a": "skin_chroma",
+        "01bb38e1-da47-4e6a-9b3d-945fe4655707": "agent",
+        "f85cb6f7-33e5-4dc8-b609-ec7212301948": "contract_definition",
+        "dd3bf334-87f3-40bd-b043-682a57a8dc3a": "buddy",
+        "d5f120f8-ff8c-4aac-92ea-f2b5acbe9475": "spray",
+        "3f296c07-64c3-494c-923b-fe692a4fa1bd": "player_card",
+        "de7caa6b-adf7-4588-bbd1-143831e786c6": "player_title",
+        """
+        data = self.fetch(
+            endpoint=f"/store/v1/entitlements/{self.puuid}/{item_type}",
+            endpoint_type="pd",
+        )
+        return data
+
+    def skin_map():
+        try:
+            response = requests.get("https://valorant-api.com/v1/weapons/skins")
+            data = response.json()
+            return data
+        except Exception as e:
+            return False
+        
+
+    def item_prices(self) -> t.Mapping[str, t.Any]:
+        """Get prices for all store items"""
+        data = self.fetch("/store/v1/offers/", endpoint_type="pd")
+        return data
+
+    def store_items(self) -> t.Mapping[str, t.Any]:
+        """Get the currently available items in the store"""
+        data = self.fetch(f"/store/v2/storefront/{self.puuid}", endpoint_type="pd")
+        return data
+
+    def wallet(self) -> t.Mapping[str, t.Any]:
+        """Get amount of Valorant points Radianite and Kingdom Credits the player has"""
+        data = self.fetch(f"/store/v1/wallet/{self.puuid}", endpoint_type="pd")
+        return data

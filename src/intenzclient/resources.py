@@ -9,16 +9,3 @@ region_shard_override = {
     "br": "na",
 }
 shard_region_override = {"pbe": "na"}
-
-queues = [
-    "competitive",
-    "custom",
-    "deathmatch",
-    "ggteam",
-    "snowball",
-    "spikerush",
-    "unrated",
-    "onefa",
-    "swiftplay",
-    "null",
-]
