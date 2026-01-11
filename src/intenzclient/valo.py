@@ -66,6 +66,7 @@ class Client:
                 session = self.rnet_fetch_chat_session()
                 self.player_name = session["game_name"]
                 self.player_tag = session["game_tag"]
+                print(f"CLIENT USER: ${self.player_name}#${self.player_tag}")
             else:
                 self.puuid, self.headers, self.local_headers = self.auth.authenticate()
         except:
@@ -977,13 +978,7 @@ class Client:
         )
         return data
 
-    def rnet_fetch_chat_session(self) -> t.Mapping[str, t.Any]:
-        """
-        TEXT_CHAT_RNet_FetchSession
-        Get the current session including player name and PUUID
-        """
-        data = self.fetch(endpoint="/chat/v1/session", endpoint_type="local")
-        return data
+    
 
     def rnet_fetch_all_friends(self) -> t.Mapping[str, t.Any]:
         """
@@ -1037,6 +1032,20 @@ class Client:
 
     def __pregame_check_match_id(self, match_id) -> str:
         return self.pregame_fetch_player()["MatchID"] if match_id is None else match_id   
+    
+
+
+    # NEEDED
+    # NEEDED
+    # NEEDED
+
+    def rnet_fetch_chat_session(self) -> t.Mapping[str, t.Any]:
+        """
+        TEXT_CHAT_RNet_FetchSession
+        Get the current session including player name and PUUID
+        """
+        data = self.fetch(endpoint="/chat/v1/session", endpoint_type="local")
+        return data
 
     def __build_urls(self) -> str:
         """Generate URLs based on region/shard"""
@@ -1100,6 +1109,28 @@ class Client:
         except:
             raise LockfileError("Lockfile not found")
         
+
+
+
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+    # OWN
+
+
+
 
     def in_agent_select(self):
         """Checks if user is currently is in the agent select and returns MatchID"""

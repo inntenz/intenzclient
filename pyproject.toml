@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "intenzclient"
-version = "0.1.2"
+version = "0.1.3"
 description = "Python client for Valorant internal APIs"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -19,7 +19,6 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/inntenz/intenzclient"
 Source = "https://github.com/inntenz/intenzclient"
 
 [tool.setuptools]
