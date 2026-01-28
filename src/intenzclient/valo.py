@@ -1275,6 +1275,14 @@ class Client:
         )
         return data
 
+    def get_all_items():
+        # get all items
+        data = self.fetch(
+            endpoint=f"/store/v1/entitlements/{self.puuid}",
+            endpoint_type="pd",
+        )
+        return data
+
     def skin_map():
         try:
             response = requests.get("https://valorant-api.com/v1/weapons/skins")
@@ -1297,4 +1305,5 @@ class Client:
     def wallet(self) -> t.Mapping[str, t.Any]:
         """Get amount of Valorant points Radianite and Kingdom Credits the player has"""
         data = self.fetch(f"/store/v1/wallet/{self.puuid}", endpoint_type="pd")
+
         return data
