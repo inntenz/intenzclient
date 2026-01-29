@@ -348,7 +348,7 @@ class Client:
         Store_GetStorefrontV2
         Get the currently available items in the store
         """
-        data = self.fetch(f"/store/v2/storefront/{self.puuid}", endpoint_type="pd")
+        data = self.post(f"/store/v3/storefront/{self.puuid}", endpoint_type="pd", json_data={},)
         return data
 
     def store_fetch_wallet(self) -> t.Mapping[str, t.Any]:
@@ -1275,14 +1275,6 @@ class Client:
         )
         return data
 
-    def get_all_items():
-        # get all items
-        data = self.fetch(
-            endpoint=f"/store/v1/entitlements/{self.puuid}",
-            endpoint_type="pd",
-        )
-        return data
-
     def skin_map():
         try:
             response = requests.get("https://valorant-api.com/v1/weapons/skins")
@@ -1298,12 +1290,10 @@ class Client:
         return data
 
     def store_items(self) -> t.Mapping[str, t.Any]:
-        """Get the currently available items in the store"""
-        data = self.fetch(f"/store/v2/storefront/{self.puuid}", endpoint_type="pd")
+        data = self.post(f"/store/v3/storefront/{self.puuid}", endpoint_type="pd", json_data={},)
         return data
 
     def wallet(self) -> t.Mapping[str, t.Any]:
         """Get amount of Valorant points Radianite and Kingdom Credits the player has"""
         data = self.fetch(f"/store/v1/wallet/{self.puuid}", endpoint_type="pd")
-
         return data
